@@ -1,0 +1,470 @@
+<!--
+  Copyright 2018 Square Inc.
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+      http://www.apache.org/licenses/LICENSE-2.0
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<!DOCTYPE html>
+<html>
+  <head>
+    <!-- link to the SqPaymentForm library -->
+    <script
+      type="text/javascript"
+      src="https://js.squareupsandbox.com/v2/paymentform"
+    ></script>
+
+    <link
+      rel="stylesheet"
+      href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css"
+    />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+
+    <!-- link to the local custom styles for SqPaymentForm -->
+    <link rel="stylesheet" type="text/css" href="mysqpaymentform.css" />
+    <style type="text/css">
+      .button-credit-card {
+        background-color: #bf0d3e;
+        width: 50%;
+        margin: auto;
+      }
+
+      .button-credit-card:hover {
+        background-color: #041e42;
+      }
+
+      #form-container {
+        width: 35%;
+      }
+      .symbol.large {
+        font-weight: 700;
+      }
+      .morra-center {
+        text-align: center;
+      }
+    </style>
+    <link
+      rel="stylesheet"
+      href="https://use.fontawesome.com/releases/v5.9.0/css/all.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://use.fontawesome.com/releases/v5.9.0/css/v4-shims.css"
+    />
+    <link
+      href="https://fonts.googleapis.com/css?family=Open+Sans:400,700%7COswald:400,700%7CDroid+Sans:400,700%7CRoboto:400,700%7CLato:400,700%7CPT+Sans:400,700%7CSource+Sans+Pro:400,600,700%7CNoto+Sans:400,700%7CPT+Sans:400,700%7CUbuntu:400,700%7CBitter:400,700%7CPT+Serif:400,700%7CRokkitt:400,700%7CDroid+Serif:400,700%7CRaleway:400,700%7CInconsolata:400,700"
+      rel="stylesheet"
+      type="text/css"
+    />
+  </head>
+  <script type="text/javascript">
+    function handleClick() {
+      var packageInfo = $('input[name="purchase[product_id]"]:checked').attr(
+        "data-product-label"
+      );
+      var packageAmt = $('input[name="purchase[product_id]"]:checked').attr(
+        "data-product-amount"
+      );
+
+      $("#packageInfo").html(packageInfo);
+      $("#packageAmt").html("$" + packageAmt);
+      //     $("#sq-creditcard").html('Your Donation Amount is $'+ packageAmt);
+    }
+    // Create and initialize a payment form object
+    const paymentForm = new SqPaymentForm({
+      // Initialize the payment form elements
+
+      //TODO: Replace with your sandbox application ID
+      applicationId: "sandbox-sq0idb-iL089XClzXzTORUHDu9JDg",
+      inputClass: "sq-input",
+      autoBuild: false,
+      // Customize the CSS for SqPaymentForm iframe elements
+      inputStyles: [
+        {
+          fontSize: "16px",
+          lineHeight: "24px",
+          padding: "16px",
+          placeholderColor: "#a0a0a0",
+          backgroundColor: "transparent",
+        },
+      ],
+      // Initialize the credit card placeholders
+      cardNumber: {
+        elementId: "sq-card-number",
+        placeholder: "Card Number",
+      },
+      cvv: {
+        elementId: "sq-cvv",
+        placeholder: "CVV",
+      },
+      expirationDate: {
+        elementId: "sq-expiration-date",
+        placeholder: "MM/YY",
+      },
+      postalCode: {
+        elementId: "sq-postal-code",
+        placeholder: "Postal",
+      },
+      // SqPaymentForm callback functions
+      callbacks: {
+        /*
+         * callback function: cardNonceResponseReceived
+         * Triggered when: SqPaymentForm completes a card nonce request
+         */
+        cardNonceResponseReceived: function (errors, nonce, cardData) {
+          if (errors) {
+            // Log errors from nonce generation to the browser developer console.
+            console.error("Encountered errors:");
+            errors.forEach(function (error) {
+              console.error("  " + error.message);
+            });
+            alert(
+              "Encountered errors, check browser developer console for more details"
+            );
+            return;
+          }
+          //alert(`The generated nonce is:\n${nonce}`);
+          //TODO: Replace alert with code in step 2.1
+          fetch("process-payment", {
+            method: "POST",
+            headers: {
+              Accept: "application/json",
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              nonce: nonce,
+            }),
+          })
+            .catch((err) => {
+              alert("Network error: " + err);
+            })
+            .then((response) => {
+              if (!response.ok) {
+                return response
+                  .json()
+                  .then((errorInfo) => Promise.reject(errorInfo)); //UPDATE HERE
+              }
+              return response.json(); //UPDATE HERE
+            })
+            .then((data) => {
+              console.log(data); //UPDATE HERE
+              alert(
+                "Payment complete successfully!\nCheck browser developer console for more details"
+              );
+            })
+            .catch((err) => {
+              console.error(err);
+              alert(
+                "Payment failed to complete!\nCheck browser developer console for more details"
+              );
+            });
+        },
+      },
+    });
+    //TODO: paste code from step 1.1.4
+    //TODO: paste code from step 1.1.5
+    paymentForm.build();
+    // onGetCardNonce is triggered when the "Pay $1.00" button is clicked
+    function onGetCardNonce(event) {
+      // Don't submit the form until SqPaymentForm returns with a nonce
+      event.preventDefault();
+      // Request a nonce from the SqPaymentForm object
+      paymentForm.requestCardNonce();
+    }
+  </script>
+  <body>
+    <div class="container">
+      <div class="row">
+        <div class="col-md-12">
+          <h1
+            class="ne elHeadline hsSize3 lh4 elMargin0 elBGStyle0 hsTextShadow0 padding0 radius0 mfs_23"
+            style="
+              text-align: center;
+              font-size: 34px;
+              color: rgb(191, 13, 62);
+            "
+            data-bold="inherit"
+            data-gramm="false"
+            contenteditable="false"
+          >
+            <b style="font-family: inherit;">
+              Donation Is Needed!
+            </b>
+            <br />
+            <br />
+            <div>
+              <div
+                class="ne elHeadline hsSize3 lh4 elMargin0 elBGStyle0 hsTextShadow0 padding0 radius0 mfs_23"
+                style="
+                  text-align: center;
+                  font-size: 26px;
+                  color: rgb(191, 13, 62);
+                "
+              >
+                Thank you for joining us to build first Islamic Center in Saint
+                Chalres, MO!&nbsp;
+                <div><br /></div>
+                <div>All donations are tax deductible.</div>
+              </div>
+            </div>
+          </h1>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12"></div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-12">
+          <table class="elOrderProductOptions elProductOptionsBox">
+            <tbody>
+              <tr
+                class="clearfix elOrderProductOptinLabel elOrderProductOptinLabelTable"
+                style="
+                  color: rgb(255, 255, 255);
+                  background-color: rgb(191, 13, 62);
+                "
+              >
+                <th class="pull-middle elOrderProductOptinItem" width="100%">
+                  Choose Your Donation
+                </th>
+                <th
+                  class="pull-middle elOrderProductOptinLabelPrice elOrderProductOptinPriceTable"
+                  width="100%"
+                >
+                  Amount
+                </th>
+              </tr>
+              <tr
+                class="clearfix elOrderProductOptinProducts elOrderProductOptinProductName"
+                data-cf-product-template="true"
+                style="width: inherit;"
+              >
+                <td class="pull-middle elOrderProductOptinTableProductName">
+                  <span id="symbol" class="symbol large"> • </span>
+                  <label for="pid-2714648-0" data-cf-product-name="true"
+                    >1 Brick Package Donation</label
+                  >
+                </td>
+                <td
+                  class="pull-middle elOrderProductOptinPrice elOrderProductOptinTablePriceName"
+                  data-cf-product-price="true"
+                  taxamo-currency="USD"
+                >
+                  $100
+                </td>
+              </tr>
+              <tr
+                class="clearfix elOrderProductOptinProducts elOrderProductOptinProductName"
+                data-cf-product-template="true"
+                style="width: inherit;"
+              >
+                <td class="pull-middle elOrderProductOptinTableProductName">
+                  <span id="symbol" class="symbol large"> • </span>
+                  <label for="pid-2720006-0" data-cf-product-name="true"
+                    >1/2 Brick Package Donation</label
+                  >
+                </td>
+                <td
+                  class="pull-middle elOrderProductOptinPrice elOrderProductOptinTablePriceName"
+                  data-cf-product-price="true"
+                  taxamo-currency="USD"
+                >
+                  $50
+                </td>
+              </tr>
+              <tr
+                class="clearfix elOrderProductOptinProducts elOrderProductOptinProductName"
+                data-cf-product-template="true"
+                style="width: inherit;"
+              >
+                <td class="pull-middle elOrderProductOptinTableProductName">
+                  <span id="symbol" class="symbol large"> • </span>
+                  <label for="pid-2720012-0" data-cf-product-name="true"
+                    >2 Brick Package Donation</label
+                  >
+                </td>
+                <td
+                  class="pull-middle elOrderProductOptinPrice elOrderProductOptinTablePriceName"
+                  data-cf-product-price="true"
+                  taxamo-currency="USD"
+                >
+                  $200
+                </td>
+              </tr>
+              <tr
+                class="clearfix elOrderProductOptinProducts elOrderProductOptinProductName"
+                data-cf-product-template="true"
+                style="width: inherit;"
+              >
+                <td class="pull-middle elOrderProductOptinTableProductName">
+                  <span id="symbol" class="symbol large"> • </span>
+                  <label for="pid-2720018-0" data-cf-product-name="true"
+                    >3 Brick Package Donation</label
+                  >
+                </td>
+                <td
+                  class="pull-middle elOrderProductOptinPrice elOrderProductOptinTablePriceName"
+                  data-cf-product-price="true"
+                  taxamo-currency="USD"
+                >
+                  $300
+                </td>
+              </tr>
+              <tr
+                class="clearfix elOrderProductOptinProducts elOrderProductOptinProductName"
+                data-cf-product-template="true"
+                style="width: inherit;"
+              >
+                <td class="pull-middle elOrderProductOptinTableProductName">
+                  <span id="symbol" class="symbol large"> • </span>
+                  <label for="pid-2726408-0" data-cf-product-name="true"
+                    >5 Brick Package Donation</label
+                  >
+                </td>
+                <td
+                  class="pull-middle elOrderProductOptinPrice elOrderProductOptinTablePriceName"
+                  data-cf-product-price="true"
+                  taxamo-currency="USD"
+                >
+                  $500
+                </td>
+              </tr>
+              <tr
+                class="clearfix elOrderProductOptinProducts elOrderProductOptinProductName activeRadioProduct"
+                data-cf-product-template="true"
+                style="width: inherit;"
+              >
+                <td class="pull-middle elOrderProductOptinTableProductName">
+                  <span id="symbol" class="symbol large"> • </span>
+                  <label for="pid-2726428-0" data-cf-product-name="true"
+                    >10 Brick Package Donation</label
+                  >
+                </td>
+                <td
+                  class="pull-middle elOrderProductOptinPrice elOrderProductOptinTablePriceName"
+                  data-cf-product-price="true"
+                  taxamo-currency="USD"
+                >
+                  $1,000
+                </td>
+              </tr>
+              <tr
+                class="clearfix elOrderProductOptinProducts elOrderProductOptinProductName"
+                data-cf-product-template="true"
+                style="width: inherit;"
+              >
+                <td class="pull-middle elOrderProductOptinTableProductName">
+                  <span id="symbol" class="symbol large"> • </span>
+                  <label for="pid-2726429-0" data-cf-product-name="true"
+                    >15 Brick Package Donation</label
+                  >
+                </td>
+                <td
+                  class="pull-middle elOrderProductOptinPrice elOrderProductOptinTablePriceName"
+                  data-cf-product-price="true"
+                  taxamo-currency="USD"
+                >
+                  $1,500
+                </td>
+              </tr>
+              <tr
+                class="clearfix elOrderProductOptinProducts elOrderProductOptinProductName"
+                data-cf-product-template="true"
+                style="width: inherit;"
+              >
+                <td class="pull-middle elOrderProductOptinTableProductName">
+                  <span id="symbol" class="symbol large"> • </span>
+                  <label for="pid-2727318-0" data-cf-product-name="true"
+                    >25 Brick Package Donation</label
+                  >
+                </td>
+                <td
+                  class="pull-middle elOrderProductOptinPrice elOrderProductOptinTablePriceName"
+                  data-cf-product-price="true"
+                  taxamo-currency="USD"
+                >
+                  $2,500
+                </td>
+              </tr>
+              <tr
+                class="clearfix elOrderProductOptinProducts elOrderProductOptinProductName"
+                data-cf-product-template="true"
+                style="width: inherit;"
+              >
+                <td class="pull-middle elOrderProductOptinTableProductName">
+                  <span id="symbol" class="symbol large"> • </span>
+                  <label for="pid-2752555-0" data-cf-product-name="true"
+                    >50 Brick Package Donation - MashaAllah!</label
+                  >
+                </td>
+                <td
+                  class="pull-middle elOrderProductOptinPrice elOrderProductOptinTablePriceName"
+                  data-cf-product-price="true"
+                  taxamo-currency="USD"
+                >
+                  $5,000
+                </td>
+              </tr>
+              <tr
+                class="clearfix elOrderProductOptinProducts elOrderProductOptinProductName"
+                data-cf-product-template="true"
+                style="width: inherit;"
+              >
+                <td class="pull-middle elOrderProductOptinTableProductName">
+                  <span id="symbol" class="symbol large"> • </span>
+                  <label for="pid-2752585-0" data-cf-product-name="true"
+                    >100 Brick Package Donation - Allahu Akbar!</label
+                  >
+                </td>
+                <td
+                  class="pull-middle elOrderProductOptinPrice elOrderProductOptinTablePriceName"
+                  data-cf-product-price="true"
+                  taxamo-currency="USD"
+                >
+                  $10,000
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12 morra-center">
+          <form
+            action="https://www.paypal.com/cgi-bin/webscr"
+            method="post"
+            target="_top"
+          >
+            <input name="cmd" type="hidden" value="_s-xclick" />
+            <input
+              name="hosted_button_id"
+              type="hidden"
+              value="XNAFUVHNUAU4W"
+            />
+            <input
+              title="PayPal - The safer, easier way to pay online!"
+              alt="Donate with PayPal button"
+              name="submit"
+              src="/images/paypal-donate.png"
+              type="image"
+            />
+            <img
+              src="https://www.paypal.com/en_US/i/scr/pixel.gif"
+              alt=""
+              width="1"
+              height="1"
+              border="0"
+            />
+          </form>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
